@@ -1,0 +1,14 @@
+{
+	"manifest_version": 2,
+	"name": "SaveHash",
+	"version": "0.1.0",
+
+	"description": "Saves hash anchor links in local storage for easy access in future",
+
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["saveHash.js"]
+		}
+	]
+}
