@@ -1,126 +1,199 @@
-(function(){
+(function () {
+  /**
+   * Check and set a global guard variable.
+   * If this content script is injected into the same page again,
+   * it will do nothing next time.
+   */
 
-	injectHTML();
-	init();
-	const links = Array.from(document.links);
-	const HASH_REGEX = /#/;
-	const hashLinks = links.filter(link=>link.href.match(HASH_REGEX));
-	const textContentAndHashArray = [];
-	const hostName = window.location.hostname;
+  if (window.hasRun) {
+    return;
+  }
+  window.hasRun = true;
 
+  // TODO: add a very simple "flashMessage" to alert about save and deletion
 
-	function injectHTML(){
-		const saveHashElement = `
-			<div id="saveHashElement" class="saveHash">
-				<div class="saveHash__btns">
-					<button class="saveHash__btn" id="getSaved">Get Saved</button>
-					<button class="saveHash__btn" id="captureAll">Capture All</button>
-					<button class="saveHash__btn" id="startCapturing">Start Capturing</button>
-					<button class="saveHash__btn" id="finishCapturing">Finish Capturing</button>
-					<button class="saveHash__btn" id="resetCaptures">Reset</button>
-				</div>
-				<div id="savedHashes" class="saveHash__saved">
-				</div>
-			</div>
-		`	
-		document.body.insertAdjacentHTML("beforeend", saveHashElement);
-	}
+  /**
+   * get initial contents.
+   * everything inside the <body>
+   * and wrap them in a div
+   */
+  (function wrapInitialContents() {
+    const initialContents = document.body.innerHTML;
+    document.body.innerHTML = "";
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `
+      <div id="initialContent" class="saveHash__initialContent">
+        ${initialContents}
+      </div>
+    `
+    );
+  })();
 
-	function init(){
-		const buttons = document.querySelectorAll(".saveHash__btn");
-		buttons.forEach(btn=>btn.addEventListener("click", (e)=>{
-			const id = e.currentTarget.id;
-			switch(id){
-				case "getSaved":
-				getSaved();
-				break;
+  /**
+   * injecting HTML on active tab,
+   * to display saved hashes/error message.
+   * TODO: refactor this HTML and CSS to make it "pretty".
+   */
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `
+    <div id="savedHashes" class="saveHash__saved"> </div>
+  `
+  );
 
-				case "captureAll":
-				captureAll();
-				break;
+  // global variables
+  const links = Array.from(document.links);
+  const HASH_REGEX = /#/;
+  const hashLinks = links.filter((link) => link.href.match(HASH_REGEX));
+  const textContentAndHashArray = [];
+  const hostName = window.location.hostname;
+  const savedHashesElement = document.getElementById("savedHashes");
+  const initialContent = document.getElementById("initialContent");
+  const cssURL = browser.extension.getURL("/saveHash.css");
 
-				case "startCapturing":
-				startCapturing();
-				break;
+  /**
+   * inject link to "/saveHash.css" file in the <head>
+   * specified as "web_accessible_resources" in manifest.json
+   */
+  document.head.insertAdjacentHTML(
+    "beforeend",
+    `
+    <link rel="stylesheet" type="text/css" href="${cssURL}">
+  `
+  );
 
-				case "finishCapturing":
-				finishCapturing();
-				break;
+  /**
+   ** Listen for messages from the background script [/popup/saveHash.js]
+   ** Then call init() with the incoming message's command.
+   */
+  browser.runtime.onMessage.addListener((message) => {
+    const { command } = message;
+    init(command);
+  });
 
-				case "resetCaptures":
-				resetCaptures();
-				break;
-			}
-		}));
-	}
+  /**
+   * @param {String} command
+   * @description Invokes appropriate functions based on the command
+   */
 
-	function startCapturing(){
-		hashLinks.forEach(hash=>hash.addEventListener("click", (e)=>{
-			pushTextContentAndHash(e);
-		}));
-	}
+  function init(command) {
+    switch (command) {
+      case "getSaved":
+        getSaved();
+        break;
 
-	function finishCapturing(){
-		saveTextContentAndHash();
-	}
+      case "captureAll":
+        captureAll();
+        break;
 
-	function captureAll(){
-		console.log(hashLinks);
-		hashLinks.forEach(hashLink=>pushTextContentAndHash(hashLink));
-		saveTextContentAndHash();
-	}
+      case "startCapturing":
+        startCapturing();
+        break;
 
-	function resetCaptures(){
-		window.localStorage.removeItem(`savedHash_${hostName}`);
-		console.log("All the captures to hash link has been cleared.")
-	}
+      case "finishCapturing":
+        finishCapturing();
+        break;
 
-	function pushTextContentAndHash(e){
-		const element = e.currentTarget || e;
-		const textContentAndHash = {
-			textContent: getTextContent(element),
-			hash: element.href
-		};
-		textContentAndHashArray.push(textContentAndHash);
-	}
+      case "resetCaptures":
+        resetCaptures();
+        break;
+    }
+  }
 
-	function saveTextContentAndHash(){
-		const stringifiedData = JSON.stringify(textContentAndHashArray);
-		window.localStorage.setItem(`savedHash_${hostName}`, stringifiedData);
-		console.log("Saved Successfully.");
-	}
+  function startCapturing() {
+    hashLinks.forEach((hash) =>
+      hash.addEventListener("click", (e) => {
+        pushTextContentAndHash(e);
+      })
+    );
+  }
 
-	function getTextContentAndHash(){
-		const dataFromLocalStorage = window.localStorage.getItem(`savedHash_${hostName}`);
-		return JSON.parse(dataFromLocalStorage);
-	}
+  function finishCapturing() {
+    saveTextContentAndHash();
+  }
 
-	function getSaved(){
-		const textContentAndHashArray = getTextContentAndHash();
-		injectSavedHashes(textContentAndHashArray);
-	}
+  function captureAll() {
+    console.log(hashLinks);
+    hashLinks.forEach((hashLink) => pushTextContentAndHash(hashLink));
+    saveTextContentAndHash();
+  }
 
-	function injectSavedHashes(textContentAndHashArray){
-		const savedHashesElement = document.getElementById("savedHashes");
-		savedHashesElement.innerHTML = "";
-		const HTML = `
-			${textContentAndHashArray.map(textAndHash=>{
-				const {textContent, hash} = textAndHash;
-				return `
-					<h3>
-						<a href="${hash}">${textContent}</a>
-					</h3>
-				`
-			}).join("")}
-		`;
-		savedHashesElement.insertAdjacentHTML("beforeend", HTML);
-	}
+  // TODO: alert success/failure with a simple flash message
 
-	function getTextContent(element){
-		const textContent = element.textContent;
-		if(!textContent){
-			return getTextContent(element.parentElement);
-		}
-		return textContent;
-	}
+  function resetCaptures() {
+    window.localStorage.removeItem(`savedHash_${hostName}`);
+    savedHashesElement.innerHTML = "";
+    savedHashesElement.classList.remove("saveHash__saved--active");
+    initialContent.classList.remove("saveHash__initialContent--active");
+    console.log("All the captures to hash link has been cleared.");
+  }
+
+  function pushTextContentAndHash(e) {
+    const element = e.currentTarget || e;
+    const textContentAndHash = {
+      textContent: getTextContent(element),
+      hash: element.href,
+    };
+    textContentAndHashArray.push(textContentAndHash);
+  }
+
+  // TODO: alert success/failure with a simple flash message
+
+  function saveTextContentAndHash() {
+    const stringifiedData = JSON.stringify(textContentAndHashArray);
+    window.localStorage.setItem(`savedHash_${hostName}`, stringifiedData);
+    console.log("Saved Successfully.");
+  }
+
+  function getTextContentAndHash() {
+    const dataFromLocalStorage = window.localStorage.getItem(
+      `savedHash_${hostName}`
+    );
+    return JSON.parse(dataFromLocalStorage);
+  }
+
+  function getSaved() {
+    const textContentAndHashArray = getTextContentAndHash();
+    injectSavedHashes(textContentAndHashArray);
+  }
+
+  function injectSavedHashes(textContentAndHashArray) {
+    savedHashesElement.innerHTML = "";
+    savedHashesElement.classList.add("saveHash__saved--active");
+    initialContent.classList.add("saveHash__initialContent--active");
+    if (textContentAndHashArray && textContentAndHashArray.length) {
+      const HTML = `
+  		${textContentAndHashArray
+        .map((textAndHash) => {
+          const { textContent, hash } = textAndHash;
+          return `
+  				<p>
+  					<a href="${hash}" class="saveHash__link">${textContent}</a>
+  				</p>
+  			`;
+        })
+        .join("")}
+      `;
+      savedHashesElement.insertAdjacentHTML("beforeend", HTML);
+    } else {
+      savedHashesElement.innerHTML = `
+        <h3 class="errorMessage">There are no saved hashes yet.</h3>
+        <p>Click <em>Start Capturing</em> button to start saving the hashes.</p>
+      `;
+    }
+  }
+
+  /**
+   * @param {Object} element
+   * @description with an "anchor tag" element as the argument, if found, returns its "textContent" else calls itself with argument's parent element.
+   */
+
+  function getTextContent(element) {
+    const textContent = element.textContent;
+    if (!textContent) {
+      return getTextContent(element.parentElement);
+    }
+    return textContent;
+  }
 })();

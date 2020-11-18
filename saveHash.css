@@ -1,0 +1,37 @@
+.saveHash__saved {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em;
+  height: 100%;
+  width: 100%;
+  max-width: 250px;
+  background-color: aliceblue;
+}
+
+.saveHash__saved--active {
+  display: flex;
+  box-shadow: 6px 6px 12px -6px rgba(0, 0, 0, 0.3);
+}
+
+.saveHash__saved:nth-child(even) {
+  background-color: rgb(185, 212, 236);
+}
+
+.saveHash__link {
+  color: rgb(11, 110, 190);
+}
+
+.saveHash__initialContent {
+  transition: transform 0.3s ease-in-out;
+}
+
+.saveHash__initialContent--active {
+  transform: translateX(250px);
+  max-width: calc(100% - 250px);
+}
