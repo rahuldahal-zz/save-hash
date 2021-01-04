@@ -16,7 +16,7 @@
   let links;
   const HASH_REGEX = /#/;
   let hashLinks;
-  const textContentAndHashArray = [];
+  let textContentAndHash;
   const hostAndPath = `${window.location.hostname} ${window.location.pathname}`;
   let savedHashesElement;
   let initialContent;
@@ -119,9 +119,7 @@
     console.trace();
     hashLinks.forEach((hash) => {
       hash.addEventListener("click", (e) => {
-        console.log("clicked!!");
-        pushTextContentAndHash(e);
-        saveTextContentAndHash();
+        pushTextContentAndHash(e) && saveTextContentAndHash();
       });
     });
   }
@@ -138,12 +136,26 @@
 
   function pushTextContentAndHash(e) {
     const element = e.currentTarget || e;
-    const textContentAndHash = {
+    const savedPreviously = window.localStorage.getItem(
+      `savedHash_${hostAndPath}`
+    );
+
+    let isDuplicate = false;
+    if (savedPreviously) {
+      isDuplicate = JSON.parse(savedPreviously).some(
+        (elem) => elem.hash === element.href
+      );
+      console.log(isDuplicate);
+    }
+    if (isDuplicate) {
+      console.log("Duplicate: Cannot push to array");
+      return false;
+    }
+    textContentAndHash = {
       textContent: getTextContent(element),
       hash: element.href,
     };
-    console.log(textContentAndHashArray);
-    textContentAndHashArray.push(textContentAndHash);
+    return textContentAndHash;
   }
 
   // TODO: alert success/failure with a simple flash message
@@ -152,10 +164,9 @@
     const savedPreviously = window.localStorage.getItem(
       `savedHash_${hostAndPath}`
     );
-    const stringifiedData = JSON.stringify([
-      ...JSON.parse(savedPreviously),
-      ...textContentAndHashArray,
-    ]);
+    const stringifiedData = savedPreviously
+      ? JSON.stringify([...JSON.parse(savedPreviously), textContentAndHash])
+      : JSON.stringify([textContentAndHash]);
     window.localStorage.setItem(`savedHash_${hostAndPath}`, stringifiedData);
     console.log("Saved Successfully.");
   }
@@ -164,6 +175,7 @@
     const dataFromLocalStorage = window.localStorage.getItem(
       `savedHash_${hostAndPath}`
     );
+    console.log(dataFromLocalStorage);
     return JSON.parse(dataFromLocalStorage);
   }
 
