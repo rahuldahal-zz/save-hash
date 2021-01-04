@@ -1,3 +1,7 @@
+body{
+  scroll-behavior: smooth;
+}
+
 .saveHash__saved {
   position: fixed;
   left: 0;
@@ -7,11 +11,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.5em;
   height: 100%;
   width: 100%;
-  max-width: 250px;
-  background-color: aliceblue;
+  max-width: 15.625rem;
+  overflow-y: scroll;
+  background-color: #add0ec;
 }
 
 .saveHash__saved--active {
@@ -19,13 +23,41 @@
   box-shadow: 6px 6px 12px -6px rgba(0, 0, 0, 0.3);
 }
 
-.saveHash__saved:nth-child(even) {
-  background-color: rgb(185, 212, 236);
+.saveHash__link {
+  position: relative;
+  display: block;
+  min-width: 100%;
+  color: #70b6f0;
+  background-color: #004175;
+  padding: 0.5em;
 }
 
-.saveHash__link {
-  color: rgb(11, 110, 190);
+.saveHash__link::before{
+  content: "#";
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  line-height: 1rem;
+  color: inherit;
 }
+
+.saveHash__link:nth-child(even) {
+  background-color: #1479cc;
+  color: #012746;
+}
+
+.saveHash__link--savable{
+  cursor: copy;
+}
+
+.saveHash__link--saved{
+  color: red; /* TODO: change this*/
+}
+
+.saveHash h3, p{
+  color: #333;
+  padding: 0.5rem;
+}
+
 
 .saveHash__initialContent {
   transition: transform 0.3s ease-in-out;

@@ -5,6 +5,7 @@
    * it will do nothing next time.
    */
 
+   
   if (window.hasRun) {
     return;
   }
@@ -43,14 +44,20 @@
   );
 
   // global variables
-  const links = Array.from(document.links);
-  const HASH_REGEX = /#/;
-  const hashLinks = links.filter((link) => link.href.match(HASH_REGEX));
-  const textContentAndHashArray = [];
-  const hostName = window.location.hostname;
-  const savedHashesElement = document.getElementById("savedHashes");
-  const initialContent = document.getElementById("initialContent");
-  const cssURL = browser.extension.getURL("/saveHash.css");
+ // global variables
+ const links = Array.from(document.links);
+ const HASH_REGEX = /#/;
+ const hashLinks = links.filter((link) => {
+   if(link.href.match(HASH_REGEX)){
+     link.classList.add("saveHash__link--savable");
+     return link;
+   }
+ });
+ const textContentAndHashArray = [];
+ const hostNameAndPath = `${window.location.host} ${window.location.pathname}`;
+ const savedHashesElement = document.getElementById("savedHashes");
+ let initialContent = initialContent = document.getElementById("initialContent");
+ const cssURL = browser.extension.getURL("/saveHash.css");
 
   /**
    * inject link to "/saveHash.css" file in the <head>
@@ -91,10 +98,6 @@
         startCapturing();
         break;
 
-      case "finishCapturing":
-        finishCapturing();
-        break;
-
       case "resetCaptures":
         resetCaptures();
         break;
@@ -107,10 +110,8 @@
         pushTextContentAndHash(e);
       })
     );
-  }
-
-  function finishCapturing() {
     saveTextContentAndHash();
+
   }
 
   function captureAll() {
@@ -122,7 +123,7 @@
   // TODO: alert success/failure with a simple flash message
 
   function resetCaptures() {
-    window.localStorage.removeItem(`savedHash_${hostName}`);
+    window.localStorage.removeItem(`savedHash_${hostNameAndPath}`);
     savedHashesElement.innerHTML = "";
     savedHashesElement.classList.remove("saveHash__saved--active");
     initialContent.classList.remove("saveHash__initialContent--active");
@@ -142,13 +143,13 @@
 
   function saveTextContentAndHash() {
     const stringifiedData = JSON.stringify(textContentAndHashArray);
-    window.localStorage.setItem(`savedHash_${hostName}`, stringifiedData);
+    window.localStorage.setItem(`savedHash_${hostNameAndPath}`, stringifiedData);
     console.log("Saved Successfully.");
   }
 
   function getTextContentAndHash() {
     const dataFromLocalStorage = window.localStorage.getItem(
-      `savedHash_${hostName}`
+      `savedHash_${hostNameAndPath}`
     );
     return JSON.parse(dataFromLocalStorage);
   }
