@@ -1,4 +1,4 @@
-body{
+html{
   scroll-behavior: smooth;
 }
 
@@ -53,7 +53,7 @@ body{
   color: red; /* TODO: change this*/
 }
 
-.saveHash h3, p{
+.saveHash__saved h3, .saveHash__saved p{
   color: #333;
   padding: 0.5rem;
 }

@@ -5,7 +5,6 @@
    * it will do nothing next time.
    */
 
-   
   if (window.hasRun) {
     return;
   }
@@ -13,51 +12,15 @@
 
   // TODO: add a very simple "flashMessage" to alert about save and deletion
 
-  /**
-   * get initial contents.
-   * everything inside the <body>
-   * and wrap them in a div
-   */
-  (function wrapInitialContents() {
-    const initialContents = document.body.innerHTML;
-    document.body.innerHTML = "";
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      `
-      <div id="initialContent" class="saveHash__initialContent">
-        ${initialContents}
-      </div>
-    `
-    );
-  })();
-
-  /**
-   * injecting HTML on active tab,
-   * to display saved hashes/error message.
-   * TODO: refactor this HTML and CSS to make it "pretty".
-   */
-  document.body.insertAdjacentHTML(
-    "afterbegin",
-    `
-    <div id="savedHashes" class="saveHash__saved"> </div>
-  `
-  );
-
   // global variables
- // global variables
- const links = Array.from(document.links);
- const HASH_REGEX = /#/;
- const hashLinks = links.filter((link) => {
-   if(link.href.match(HASH_REGEX)){
-     link.classList.add("saveHash__link--savable");
-     return link;
-   }
- });
- const textContentAndHashArray = [];
- const hostNameAndPath = `${window.location.host} ${window.location.pathname}`;
- const savedHashesElement = document.getElementById("savedHashes");
- let initialContent = initialContent = document.getElementById("initialContent");
- const cssURL = browser.extension.getURL("/saveHash.css");
+  let links;
+  const HASH_REGEX = /#/;
+  let hashLinks;
+  const textContentAndHashArray = [];
+  const hostAndPath = `${window.location.hostname} ${window.location.pathname}`;
+  let savedHashesElement;
+  let initialContent;
+  const cssURL = browser.extension.getURL("/saveHash.css");
 
   /**
    * inject link to "/saveHash.css" file in the <head>
@@ -76,8 +39,10 @@
    */
   browser.runtime.onMessage.addListener((message) => {
     const { command } = message;
-    init(command);
+    command && init(command);
   });
+
+  let notWrappedYet = true;
 
   /**
    * @param {String} command
@@ -85,13 +50,59 @@
    */
 
   function init(command) {
+    /**
+     * get initial contents.
+     * everything inside the <body>
+     * and wrap them in a div
+     */
+    notWrappedYet &&
+      (function wrapInitialContents() {
+        console.log("wrapping");
+
+        const initialContents = document.body.innerHTML;
+        document.body.innerHTML = "";
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          `
+      <div id="initialContent" class="saveHash__initialContent">
+        ${initialContents}
+      </div>
+    `
+        );
+
+        /**
+         * injecting HTML on active tab,
+         * to display saved hashes/error message.
+         */
+        document.body.insertAdjacentHTML(
+          "afterbegin",
+          `
+    <div id="savedHashes" class="saveHash__saved"> </div>
+  `
+        );
+
+        // assigning DOM elements
+
+        links = Array.from(document.links);
+        hashLinks = links.filter((link) => {
+          if (link.href.match(HASH_REGEX)) {
+            link.classList.add("saveHash__link--savable");
+            return link;
+          }
+        });
+
+        savedHashesElement = document.getElementById("savedHashes");
+        initialContent = document.getElementById("initialContent");
+        notWrappedYet = false;
+      })();
+
+    switchRespectiveCommand(command);
+  }
+
+  function switchRespectiveCommand(command) {
     switch (command) {
       case "getSaved":
         getSaved();
-        break;
-
-      case "captureAll":
-        captureAll();
         break;
 
       case "startCapturing":
@@ -105,25 +116,20 @@
   }
 
   function startCapturing() {
-    hashLinks.forEach((hash) =>
+    console.trace();
+    hashLinks.forEach((hash) => {
       hash.addEventListener("click", (e) => {
+        console.log("clicked!!");
         pushTextContentAndHash(e);
-      })
-    );
-    saveTextContentAndHash();
-
-  }
-
-  function captureAll() {
-    console.log(hashLinks);
-    hashLinks.forEach((hashLink) => pushTextContentAndHash(hashLink));
-    saveTextContentAndHash();
+        saveTextContentAndHash();
+      });
+    });
   }
 
   // TODO: alert success/failure with a simple flash message
 
   function resetCaptures() {
-    window.localStorage.removeItem(`savedHash_${hostNameAndPath}`);
+    window.localStorage.removeItem(`savedHash_${hostAndPath}`);
     savedHashesElement.innerHTML = "";
     savedHashesElement.classList.remove("saveHash__saved--active");
     initialContent.classList.remove("saveHash__initialContent--active");
@@ -136,20 +142,27 @@
       textContent: getTextContent(element),
       hash: element.href,
     };
+    console.log(textContentAndHashArray);
     textContentAndHashArray.push(textContentAndHash);
   }
 
   // TODO: alert success/failure with a simple flash message
 
   function saveTextContentAndHash() {
-    const stringifiedData = JSON.stringify(textContentAndHashArray);
-    window.localStorage.setItem(`savedHash_${hostNameAndPath}`, stringifiedData);
+    const savedPreviously = window.localStorage.getItem(
+      `savedHash_${hostAndPath}`
+    );
+    const stringifiedData = JSON.stringify([
+      ...JSON.parse(savedPreviously),
+      ...textContentAndHashArray,
+    ]);
+    window.localStorage.setItem(`savedHash_${hostAndPath}`, stringifiedData);
     console.log("Saved Successfully.");
   }
 
   function getTextContentAndHash() {
     const dataFromLocalStorage = window.localStorage.getItem(
-      `savedHash_${hostNameAndPath}`
+      `savedHash_${hostAndPath}`
     );
     return JSON.parse(dataFromLocalStorage);
   }
@@ -161,6 +174,7 @@
 
   function injectSavedHashes(textContentAndHashArray) {
     savedHashesElement.innerHTML = "";
+    savedHashesElement.classList.remove("saveHash__saved--active");
     savedHashesElement.classList.add("saveHash__saved--active");
     initialContent.classList.add("saveHash__initialContent--active");
     if (textContentAndHashArray && textContentAndHashArray.length) {
@@ -169,9 +183,7 @@
         .map((textAndHash) => {
           const { textContent, hash } = textAndHash;
           return `
-  				<p>
   					<a href="${hash}" class="saveHash__link">${textContent}</a>
-  				</p>
   			`;
         })
         .join("")}
