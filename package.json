@@ -5,6 +5,7 @@
   "main": "saveHash.js",
   "scripts": {
     "start": "concurrently \"webpack --watch\" \"web-ext run\"",
+    "dev": "webpack",
     "test": "jest --watch"
   },
   "repository": {
@@ -19,6 +20,10 @@
   },
   "homepage": "https://github.com/rahuldahal/save-hash#readme",
   "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-jest": "^26.6.3",
+    "babel-loader": "^8.2.2",
     "concurrently": "^5.3.0",
     "jest": "^26.6.3",
     "web-ext": "^5.4.1",

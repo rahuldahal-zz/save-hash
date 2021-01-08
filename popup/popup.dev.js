@@ -9,7 +9,6 @@ function listenForClicks() {
     });
   });
 }
-
 /**
  * Get the active tab,
  * then send message to content-script(/saveHash.js) or throw an error as appropriate.
