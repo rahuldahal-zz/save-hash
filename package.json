@@ -6,7 +6,8 @@
   "scripts": {
     "start": "concurrently \"webpack --watch\" \"web-ext run\"",
     "dev": "webpack",
-    "test": "jest --watch"
+    "test": "jest",
+    "testWatch": "jest --watch"
   },
   "repository": {
     "type": "git",

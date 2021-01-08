@@ -8,7 +8,8 @@ let textContentAndHash;
 const hostAndPath = `${window.location.hostname} ${window.location.pathname}`;
 let savedHashesElement;
 let initialContent;
-const cssURL = browser.runtime.getURL("/saveHash.css");
+let hasBrowserObject = typeof browser === "object" ? true : false;
+const cssURL = hasBrowserObject && browser.runtime.getURL("/saveHash.css");
 
 /**
  * inject link to "/saveHash.css" file in the <head>
@@ -32,10 +33,11 @@ document.head.insertAdjacentHTML(
    ** Listen for messages from the background script [/popup/saveHash.js]
    ** Then call init() with the incoming message's command.
    */
-  browser.runtime.onMessage.addListener((message) => {
-    const { command } = message;
-    command && init(command);
-  });
+  hasBrowserObject &&
+    browser.runtime.onMessage.addListener((message) => {
+      const { command } = message;
+      command && init(command);
+    });
 })();
 
 let notWrappedYet = true;
