@@ -12,7 +12,7 @@ function listenForClicks() {
 
 /**
  * Get the active tab,
- * then send message to content-script or throw an error as appropriate.
+ * then send message to content-script(/saveHash.js) or throw an error as appropriate.
  */
 
 function getCurrentTabAndSendMessage(buttonId) {
@@ -26,7 +26,7 @@ function getCurrentTabAndSendMessage(buttonId) {
         command: buttonId,
       });
     })
-    .catch(() => (location.href = "https://google.com"));
+    .catch((err) => console.error(err));
 }
 
 function reportExecuteScriptError(err) {

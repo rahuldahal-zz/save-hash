@@ -1,23 +1,28 @@
 {
-  "name": "saveHash",
+  "name": "save-hash",
   "version": "1.0.0",
-  "description": "![MIT License](https://img.shields.io/github/license/rahuldahal/saveHash)\r ![Files Count](https://img.shields.io/github/directory-file-count/rahuldahal/saveHash?type=file)\r ![Top Language](https://img.shields.io/github/languages/top/rahuldahal/saveHash)\r ![Last Commit](https://img.shields.io/github/last-commit/rahuldahal/saveHash)",
+  "description": "",
   "main": "saveHash.js",
   "scripts": {
+    "start": "concurrently \"webpack --watch\" \"web-ext run\"",
     "test": "jest --watch"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rahuldahal/saveHash.git"
+    "url": "git+https://github.com/rahuldahal/save-hash.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rahuldahal/saveHash/issues"
+    "url": "https://github.com/rahuldahal/save-hash/issues"
   },
-  "homepage": "https://github.com/rahuldahal/saveHash#readme",
+  "homepage": "https://github.com/rahuldahal/save-hash#readme",
   "devDependencies": {
-    "jest": "^26.6.3"
+    "concurrently": "^5.3.0",
+    "jest": "^26.6.3",
+    "web-ext": "^5.4.1",
+    "webpack": "^5.11.1",
+    "webpack-cli": "^4.3.1"
   }
 }
