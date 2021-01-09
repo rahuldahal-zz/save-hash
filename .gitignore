@@ -5,3 +5,4 @@ web-ext-artifacts
 build
 popup.js
 saveHash.js
+*.map

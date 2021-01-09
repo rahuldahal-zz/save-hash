@@ -4,47 +4,44 @@
 let links;
 const HASH_REGEX = /#/;
 let hashLinks;
-let textContentAndHash;
 const hostAndPath = `${window.location.hostname} ${window.location.pathname}`;
 let savedHashesElement;
 let initialContent;
 let hasBrowserObject = typeof browser === "object" ? true : false;
 const cssURL = hasBrowserObject && browser.runtime.getURL("/saveHash.css");
-
-/**
- * inject link to "/saveHash.css" file in the <head>
- * specified as "web_accessible_resources" in manifest.json
- */
-document.head.insertAdjacentHTML(
-  "beforeend",
-  `
-  <link rel="stylesheet" type="text/css" href="${cssURL}">
-`
-);
+let notWrappedYet = true;
 
 (function () {
   if (window.hasRun) {
-    console.log("exititng");
     return;
   }
-  window.hasRun = true;
+  window.hasRun = true; // make sure that the code below runs only ONCE.
 
+  /**
+   * inject link to "/saveHash.css" file in the <head>
+   * specified as "web_accessible_resources" in manifest.json
+   */
+  document.head.insertAdjacentHTML(
+    "beforeend",
+    `
+  <link rel="stylesheet" type="text/css" href="${cssURL}">
+`
+  );
   /**
    ** Listen for messages from the background script [/popup/saveHash.js]
    ** Then call init() with the incoming message's command.
    */
   hasBrowserObject &&
     browser.runtime.onMessage.addListener((message) => {
+      console.log("runs");
       const { command } = message;
       command && init(command);
     });
 })();
 
-let notWrappedYet = true;
-
 /**
  * @param {String} command
- * @description Invokes appropriate functions based on the command
+ * @description Cuts the initial content and wraps it in a <div> with <saved hashes>
  */
 
 function init(command) {
@@ -53,49 +50,54 @@ function init(command) {
    * everything inside the <body>
    * and wrap them in a div
    */
-  notWrappedYet &&
-    (function wrapInitialContents() {
-      console.log("wrapping");
+  if (notWrappedYet) {
+    console.log("wrapping");
 
-      const initialContents = document.body.innerHTML;
-      document.body.innerHTML = "";
-      document.body.insertAdjacentHTML(
-        "beforeend",
-        `
+    const initialContents = document.body.innerHTML;
+    document.body.innerHTML = "";
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `
       <div id="initialContent" class="saveHash__initialContent">
         ${initialContents}
       </div>
     `
-      );
+    );
 
-      /**
-       * injecting HTML on active tab,
-       * to display saved hashes/error message.
-       */
-      document.body.insertAdjacentHTML(
-        "afterbegin",
-        `
+    /**
+     * injecting HTML on active tab,
+     * to display saved hashes/error message.
+     */
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `
     <div id="savedHashes" class="saveHash__saved"> </div>
   `
-      );
+    );
 
-      // assigning DOM elements
+    // assigning DOM elements
 
-      links = Array.from(document.links);
-      hashLinks = links.filter((link) => {
-        if (link.href.match(HASH_REGEX)) {
-          link.classList.add("saveHash__link--savable");
-          return link;
-        }
-      });
+    links = Array.from(document.links);
+    hashLinks = links.filter((link) => {
+      if (link.href.match(HASH_REGEX)) {
+        link.classList.add("saveHash__link--savable");
+        return link;
+      }
+    });
 
-      savedHashesElement = document.getElementById("savedHashes");
-      initialContent = document.getElementById("initialContent");
-      notWrappedYet = false;
-    })();
+    savedHashesElement = document.getElementById("savedHashes");
+    initialContent = document.getElementById("initialContent");
+    notWrappedYet = false;
+  }
 
   switchRespectiveCommand(command);
 }
+
+/**
+ *
+ * @param {String} command
+ * @description Invokes appropriate functions based on the command
+ */
 
 function switchRespectiveCommand(command) {
   switch (command) {
@@ -113,16 +115,25 @@ function switchRespectiveCommand(command) {
   }
 }
 
+/**
+ * @description adds click listeners to links with "hash"
+ * @fires pushTextContentAndHash
+ */
+
 function startCapturing() {
-  console.log("heyy");
   hashLinks.forEach((hash) => {
     hash.addEventListener("click", (e) => {
-      pushTextContentAndHash(e) && saveTextContentAndHash();
+      const textContentAndHash = pushTextContentAndHash(e);
+      saveTextContentAndHash(textContentAndHash);
     });
   });
 }
 
 // TODO: alert success/failure with a simple flash message
+
+/**
+ * @description remove saved items from localStorage and hide the "savedHashes" sidebar from the DOM
+ */
 
 function resetCaptures() {
   window.localStorage.removeItem(`savedHash_${hostAndPath}`);
@@ -132,39 +143,50 @@ function resetCaptures() {
   console.log("All the captures to hash link has been cleared.");
 }
 
+/**
+ *
+ * @param {Object} eventObject
+ * @description checks if "hash" in question is unique and sets an object with its textContent and href.
+ * @returns {Object} textContentAndHash
+ */
+
 function pushTextContentAndHash(e) {
   const element = e.currentTarget || e;
   const savedPreviously = window.localStorage.getItem(
     `savedHash_${hostAndPath}`
   );
   console.log("saved", savedPreviously);
-
-  try {
-    let isDuplicate = false;
-    if (savedPreviously) {
-      isDuplicate = JSON.parse(savedPreviously).some(
-        (elem) => elem.hash === element.href
-      );
-      console.log(isDuplicate);
-    }
-    if (isDuplicate) {
-      console.log("Duplicate: Cannot push to array");
-      return false;
-    }
-    textContentAndHash = {
-      textContent: getTextContent(element),
-      hash: element.href,
-    };
-    console.log("text content", textContentAndHash);
-    return textContentAndHash;
-  } catch (err) {
-    console.log(err);
+  let isDuplicate = false;
+  if (savedPreviously) {
+    isDuplicate = JSON.parse(savedPreviously).some(
+      (elem) => elem.hash === element.href
+    );
+    console.log(isDuplicate);
   }
+  if (isDuplicate) {
+    console.log("Duplicate: Cannot push to array");
+    return {};
+  }
+  const textContentAndHash = {
+    textContent: getTextContent(element),
+    hash: element.href,
+  };
+  console.log("text content", textContentAndHash);
+  return textContentAndHash;
 }
 
-// TODO: alert success/failure with a simple flash message
+/**
+ *
+ * @param {Object} textContentAndHash
+ * @description stores the textContentAndHash object in localStorage, taking previous storage data to account.
+ * @returns {Boolean} false if the param is empty, true otherwise.
+ */
 
-function saveTextContentAndHash() {
+function saveTextContentAndHash(textContentAndHash) {
+  if (Object.keys(textContentAndHash).length === 0) {
+    return console.log("The textContentAndHash is empty");
+  }
+
   const savedPreviously = window.localStorage.getItem(
     `savedHash_${hostAndPath}`
   );
@@ -173,8 +195,13 @@ function saveTextContentAndHash() {
     : JSON.stringify([textContentAndHash]);
   window.localStorage.setItem(`savedHash_${hostAndPath}`, stringifiedData);
   console.log("Saved Successfully.");
+  return true;
 }
 
+/**
+ * @description retrieves "savedHashes" from localStorage of current host.
+ * @returns {Array} JSON parsed array of "savedHashes"
+ */
 function getTextContentAndHash() {
   const dataFromLocalStorage = window.localStorage.getItem(
     `savedHash_${hostAndPath}`
@@ -187,6 +214,12 @@ function getSaved() {
   const textContentAndHashArray = getTextContentAndHash();
   injectSavedHashes(textContentAndHashArray);
 }
+
+/**
+ *
+ * @param {Array} textContentAndHashArray
+ * @description creates anchor tags from the array elements, if exists and injects them into the DOM.
+ */
 
 function injectSavedHashes(textContentAndHashArray) {
   savedHashesElement.innerHTML = "";
@@ -214,8 +247,9 @@ function injectSavedHashes(textContentAndHashArray) {
 }
 
 /**
- * @param {Object} element
- * @description with an "anchor tag" element as the argument, if found, returns its "textContent" else calls itself with argument's parent element.
+ * @param {Object} anchorTag
+ * @description returns "textContent" if found else calls itself with parent element of the argument provided.
+ * @returns {String} textContent
  */
 
 export function getTextContent(element) {

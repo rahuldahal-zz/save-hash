@@ -1,6 +1,7 @@
 const path = require("path");
 
 const common = {
+  devtool: "source-map",
   module: {
     rules: [
       {
