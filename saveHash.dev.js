@@ -1,3 +1,5 @@
+import { getFromStorage } from "./util";
+
 // TODO: add a very simple "flashMessage" to alert about save and deletion
 
 // global variables
@@ -117,13 +119,13 @@ function switchRespectiveCommand(command) {
 
 /**
  * @description adds click listeners to links with "hash"
- * @fires pushTextContentAndHash
+ * @fires setTextContentAndHash
  */
 
 function startCapturing() {
   hashLinks.forEach((hash) => {
     hash.addEventListener("click", (e) => {
-      const textContentAndHash = pushTextContentAndHash(e);
+      const textContentAndHash = setTextContentAndHash(e);
       saveTextContentAndHash(textContentAndHash);
     });
   });
@@ -142,7 +144,6 @@ function resetCaptures() {
   initialContent.classList.remove("saveHash__initialContent--active");
   console.log("All the captures to hash link has been cleared.");
 }
-
 /**
  *
  * @param {Object} eventObject
@@ -150,28 +151,22 @@ function resetCaptures() {
  * @returns {Object} textContentAndHash
  */
 
-function pushTextContentAndHash(e) {
-  const element = e.currentTarget || e;
-  const savedPreviously = window.localStorage.getItem(
-    `savedHash_${hostAndPath}`
-  );
-  console.log("saved", savedPreviously);
+export function setTextContentAndHash({ currentTarget }) {
+  const savedPreviously = getFromStorage(hostAndPath);
   let isDuplicate = false;
   if (savedPreviously) {
     isDuplicate = JSON.parse(savedPreviously).some(
-      (elem) => elem.hash === element.href
+      (elem) => elem.hash === currentTarget.href
     );
-    console.log(isDuplicate);
   }
   if (isDuplicate) {
     console.log("Duplicate: Cannot push to array");
     return {};
   }
   const textContentAndHash = {
-    textContent: getTextContent(element),
-    hash: element.href,
+    textContent: getTextContent(currentTarget),
+    hash: currentTarget.href,
   };
-  console.log("text content", textContentAndHash);
   return textContentAndHash;
 }
 
@@ -187,9 +182,7 @@ function saveTextContentAndHash(textContentAndHash) {
     return console.log("The textContentAndHash is empty");
   }
 
-  const savedPreviously = window.localStorage.getItem(
-    `savedHash_${hostAndPath}`
-  );
+  const savedPreviously = getFromStorage(hostAndPath);
   const stringifiedData = savedPreviously
     ? JSON.stringify([...JSON.parse(savedPreviously), textContentAndHash])
     : JSON.stringify([textContentAndHash]);
@@ -203,9 +196,7 @@ function saveTextContentAndHash(textContentAndHash) {
  * @returns {Array} JSON parsed array of "savedHashes"
  */
 function getTextContentAndHash() {
-  const dataFromLocalStorage = window.localStorage.getItem(
-    `savedHash_${hostAndPath}`
-  );
+  const dataFromLocalStorage = getFromStorage(hostAndPath);
   console.log(dataFromLocalStorage);
   return JSON.parse(dataFromLocalStorage);
 }
