@@ -125,8 +125,12 @@ function switchRespectiveCommand(command) {
 function startCapturing() {
   hashLinks.forEach((hash) => {
     hash.addEventListener("click", (e) => {
-      const textContentAndHash = setTextContentAndHash(e);
-      saveTextContentAndHash(textContentAndHash);
+      try {
+        const textContentAndHash = setTextContentAndHash(e);
+        saveTextContentAndHash(textContentAndHash);
+      } catch (err) {
+        console.log(err);
+      }
     });
   });
 }
@@ -174,12 +178,12 @@ export function setTextContentAndHash({ currentTarget }) {
  *
  * @param {Object} textContentAndHash
  * @description stores the textContentAndHash object in localStorage, taking previous storage data to account.
- * @returns {Boolean} false if the param is empty, true otherwise.
+ * @returns {String} null if the param is empty, data on storage otherwise.
  */
 
-function saveTextContentAndHash(textContentAndHash) {
+export function saveTextContentAndHash(textContentAndHash) {
   if (Object.keys(textContentAndHash).length === 0) {
-    return console.log("The textContentAndHash is empty");
+    return null;
   }
 
   const savedPreviously = getFromStorage(hostAndPath);
@@ -187,8 +191,7 @@ function saveTextContentAndHash(textContentAndHash) {
     ? JSON.stringify([...JSON.parse(savedPreviously), textContentAndHash])
     : JSON.stringify([textContentAndHash]);
   window.localStorage.setItem(`savedHash_${hostAndPath}`, stringifiedData);
-  console.log("Saved Successfully.");
-  return true;
+  return stringifiedData;
 }
 
 /**

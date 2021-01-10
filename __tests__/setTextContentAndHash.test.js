@@ -1,4 +1,3 @@
-import { util } from "webpack";
 import { setTextContentAndHash } from "../saveHash.dev";
 import * as utils from "../util";
 
