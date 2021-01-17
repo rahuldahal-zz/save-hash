@@ -7,7 +7,8 @@
     "start": "concurrently \"webpack --watch\" \"web-ext run\"",
     "dev": "webpack",
     "test": "jest",
-    "testWatch": "jest --watch"
+    "testWatch": "jest --watch",
+    "build": "web-ext build --ignore-files ./*.config.js ./*.md LICENSE util.js **/__*/**"
   },
   "repository": {
     "type": "git",

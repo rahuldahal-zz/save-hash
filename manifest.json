@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "saveHash",
-	"version": "1.0.0",
+	"version": "1.0.1",
 
 	"description": "Saves hash anchor links in local storage for easy access in future",
 	"homepage": "https://github.com/rahuldahal/saveHash#readme",
