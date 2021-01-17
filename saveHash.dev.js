@@ -20,16 +20,6 @@ let notWrappedYet = true;
   window.hasRun = true; // make sure that the code below runs only ONCE.
 
   /**
-   * inject link to "/saveHash.css" file in the <head>
-   * specified as "web_accessible_resources" in manifest.json
-   */
-  document.head.insertAdjacentHTML(
-    "beforeend",
-    `
-  <link rel="stylesheet" type="text/css" href="${cssURL}">
-`
-  );
-  /**
    ** Listen for messages from the background script [/popup/saveHash.js]
    ** Then call init() with the incoming message's command.
    */
@@ -64,6 +54,16 @@ function init(command) {
         ${initialContents}
       </div>
     `
+    );
+    /**
+     * inject link to "/saveHash.css" file in the <head>
+     * specified as "web_accessible_resources" in manifest.json
+     */
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `
+  <link rel="stylesheet" type="text/css" href="${cssURL}">
+`
     );
 
     /**
