@@ -9,8 +9,16 @@ test("Should get text content", () => {
       textContent: "text on parent",
     },
   };
+  const ELEM_WITH_NO_TEXT_CONTENT = {
+    parentElement: {
+      parentElement: {
+        noTextContent: null;
+      }
+    }
+  }
 
   expect(getTextContent(ELEM_WITH_TEXT_CONTENT)).toBe("text on itself");
+  expect(getTextContent(ELEM_WITH_NO_TEXT_CONTENT)).toBe("No textContent found, rename this");
   expect(getTextContent(ELEM_WITH_TEXT_CONTENT_ON_PARENT)).toBe(
     "text on parent"
   );
