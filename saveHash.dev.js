@@ -246,7 +246,13 @@ function injectSavedHashes(textContentAndHashArray) {
  * @returns {String} textContent
  */
 
+const ignoreElements = ["DIV", "MAIN", "SECTION", "HEADER", "NAV", "BODY"];
+
 export function getTextContent(element) {
+  if(ignoreElements.includes(element.tagName)){
+    return "Rename This...";
+  }
+  
   const textContent = element.textContent;
   if (!textContent) {
     return getTextContent(element.parentElement);
