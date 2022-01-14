@@ -11,7 +11,7 @@ I wanted to **save** those points, which inturn would make it easier for me to *
 
 ## Birth of SaveHash
 SaveHash makes it easier for readers to **save** *hash*(#) links. <br />
-[Get It Here](https://addons.mozilla.org/en-US/firefox/addon/savehash/) <br /><br />
+[Get It Here](https://addons.mozilla.org/firefox/addon/savehash/) <br /><br />
 
 ![Demo GIF](https://res.cloudinary.com/rdaahal/image/upload/v1609770198/saveHash/saveHash_demo_mpx0f3.gif)
 
